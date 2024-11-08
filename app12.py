@@ -67,6 +67,52 @@ def calcular_amortizacao_personalizada(parametros_amortizacao, acumular_parcelas
             })
     return fluxo_pagamentos
 
+# Funções de cálculo para SAC e Price
+def calcular_juros_sac(valor, taxa, n_parcelas, carencia, iof_adicional, iof_diario, despesas_bancarias, financiar_despesas):
+    fluxo = []
+    saldo_devedor = valor
+    amortizacao = valor / n_parcelas
+
+    for i in range(n_parcelas):
+        juros = saldo_devedor * taxa
+        parcela_total = amortizacao + juros + despesas_bancarias + (iof_adicional + iof_diario) if financiar_despesas else amortizacao + juros
+        saldo_devedor -= amortizacao
+        fluxo.append({
+            "parcela": i + 1,
+            "data_pagamento": datetime.now() + timedelta(days=(i + carencia) * 30),
+            "principal": saldo_devedor,
+            "amortizacao": amortizacao,
+            "juros": juros,
+            "iof": iof_adicional + iof_diario,
+            "despesas_bancarias": despesas_bancarias,
+            "valor_total_parcela": parcela_total,
+            "saldo_devedor": saldo_devedor
+        })
+    return fluxo
+
+def calcular_juros_price(valor, taxa, n_parcelas, carencia, iof_adicional, iof_diario, despesas_bancarias, financiar_despesas):
+    fluxo = []
+    parcela = valor * (taxa * (1 + taxa) ** n_parcelas) / ((1 + taxa) ** n_parcelas - 1)
+    saldo_devedor = valor
+
+    for i in range(n_parcelas):
+        juros = saldo_devedor * taxa
+        amortizacao = parcela - juros
+        saldo_devedor -= amortizacao
+        total_parcela = parcela + despesas_bancarias if financiar_despesas else parcela
+        fluxo.append({
+            "parcela": i + 1,
+            "data_pagamento": datetime.now() + timedelta(days=(i + carencia) * 30),
+            "principal": saldo_devedor,
+            "amortizacao": amortizacao,
+            "juros": juros,
+            "iof": iof_adicional + iof_diario,
+            "despesas_bancarias": despesas_bancarias,
+            "valor_total_parcela": total_parcela,
+            "saldo_devedor": saldo_devedor
+        })
+    return fluxo
+
 # Função principal do Streamlit com tela de login
 def login():
     st.title("Legatus Simulador de Operações de Crédito")
@@ -94,7 +140,6 @@ def simulador_capital_giro():
     iof_adicional = st.number_input("IOF Adicional (%)", value=0.38 if usa_iof_padrao else 0.0) / 100
     iof_diario = st.number_input("IOF Diário (%)", value=0.0041 if usa_iof_padrao else 0.0) / 100
 
-    # Taxa de juros baseada na seleção
     taxa_juros = st.number_input("Taxa de Juros (%)", value=5.5) / 100
     despesas_bancarias = st.number_input("Despesas Bancárias Mensais (R$)", value=0.0)
     financiar_despesas = st.checkbox("Financiar Despesas Bancárias")
