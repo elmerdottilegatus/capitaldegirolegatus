@@ -1,3 +1,20 @@
+import subprocess
+import sys
+
+# Função para instalar pacotes automaticamente se ausentes
+def install_and_import(package):
+    try:
+        __import__(package)
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# Verifique e instale pacotes necessários
+install_and_import("yfinance")
+install_and_import("pandas")
+install_and_import("numpy")
+install_and_import("streamlit")
+install_and_import("matplotlib")
+
 import pandas as pd
 import numpy as np
 import yfinance as yf
