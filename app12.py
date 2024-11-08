@@ -1,25 +1,8 @@
-import subprocess
-import sys
-
-# Função para instalar pacotes automaticamente se ausentes
-def install_and_import(package):
-    try:
-        __import__(package)
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-# Verifique e instale pacotes necessários
-install_and_import("yfinance")
-install_and_import("pandas")
-install_and_import("numpy")
-install_and_import("streamlit")
-install_and_import("matplotlib")
-
+import streamlit as st
 import pandas as pd
 import numpy as np
 import yfinance as yf
 from datetime import datetime, timedelta
-import streamlit as st
 import matplotlib.pyplot as plt
 
 # Função para obter CDI, Selic e outras taxas usando Yahoo Finance
@@ -136,16 +119,13 @@ def simulador_capital_giro():
         acumular = st.checkbox("Acumular valores de parcelas zeradas?")
         fluxo_pagamentos = calcular_amortizacao_personalizada(parametros_amortizacao, acumular)
     else:
-        # Calcular fluxo padrão para SAC e PRICE
         fluxo_pagamentos = calcular_juros_sac(valor_operacao, taxa_mensal, n_parcelas, carencia, iof_adicional, iof_diario, despesas_bancarias, financiar_despesas) if sistema_amortizacao == "SAC" else calcular_juros_price(valor_operacao, taxa_mensal, n_parcelas, carencia, iof_adicional, iof_diario, despesas_bancarias, financiar_despesas)
 
-    # Ajustar datas e validar cálculos para últimas parcelas
     for i, parcela in enumerate(fluxo_pagamentos):
         if sistema_amortizacao != "Personalizado":
             parcela["data_pagamento"] = ajustar_para_dia_util(data_inicial + timedelta(days=30 * i))
     validar_calculos_parcelas_finais(pd.DataFrame(fluxo_pagamentos), n_parcelas)
 
-    # Exibir resultados
     df_fluxo = pd.DataFrame(fluxo_pagamentos)
     st.write("Fluxo de Pagamentos Detalhado")
     st.dataframe(df_fluxo)
